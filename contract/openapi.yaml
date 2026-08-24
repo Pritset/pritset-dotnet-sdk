@@ -1,0 +1,451 @@
+openapi: 3.0.3
+info:
+  title: Pritset Document API
+  version: 1.0.0
+  description: Contract used by the official Pritset SDKs.
+  license:
+    name: MIT
+    url: https://opensource.org/license/mit
+servers:
+  - url: https://api.pritset.com
+    description: Production
+security:
+  - PritsetToken: []
+    PritsetSecret: []
+tags:
+  - name: Templates
+    description: Manage reusable DOCX templates.
+  - name: Documents
+    description: Generate PDFs directly or through webhook delivery.
+paths:
+  /api/template:
+    get:
+      operationId: listTemplates
+      summary: List templates
+      tags: [Templates]
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/SortDirection'
+      responses:
+        '200':
+          description: Matching templates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplatePage'
+              examples:
+                default:
+                  externalValue: ./fixtures/templates/list.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        default:
+          $ref: '#/components/responses/ApiError'
+    post:
+      operationId: createTemplate
+      summary: Create a template
+      tags: [Templates]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '200':
+          description: Created template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        default:
+          $ref: '#/components/responses/ApiError'
+  /api/template/{id}:
+    parameters:
+      - $ref: '#/components/parameters/TemplateId'
+    get:
+      operationId: getTemplate
+      summary: Get a template and its file metadata
+      tags: [Templates]
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateDetails'
+              examples:
+                default:
+                  externalValue: ./fixtures/templates/get.json
+        '404':
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/ApiError'
+    put:
+      operationId: updateTemplate
+      summary: Update a template
+      tags: [Templates]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplateRequest'
+      responses:
+        '200':
+          description: Updated template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/ApiError'
+    delete:
+      operationId: deleteTemplate
+      summary: Delete a template
+      tags: [Templates]
+      responses:
+        '204':
+          description: Template deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/ApiError'
+  /api/template/download/{id}:
+    get:
+      operationId: downloadTemplate
+      summary: Download the stored template file
+      tags: [Templates]
+      parameters:
+        - $ref: '#/components/parameters/TemplateId'
+      responses:
+        '200':
+          description: Original template file
+          headers:
+            Content-Length:
+              schema:
+                type: integer
+                format: int64
+          content:
+            application/msword:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/ApiError'
+  /api/template/process/validate:
+    post:
+      operationId: validateTemplate
+      summary: Validate a DOCX template against sample JSON
+      description: Uses the same token-and-secret authentication as the other public template operations.
+      tags: [Templates]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, data]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                data:
+                  type: string
+                  description: JSON serialized as a multipart text field.
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        default:
+          $ref: '#/components/responses/ApiError'
+  /api/template/process/direct/{templateId}:
+    post:
+      operationId: generateDocument
+      summary: Generate and return a PDF
+      tags: [Documents]
+      parameters:
+        - $ref: '#/components/parameters/ProcessingTemplateId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentDataRequest'
+      responses:
+        '200':
+          description: Generated PDF
+          headers:
+            X-Trace:
+              description: Serialized processing timing diagnostics.
+              schema:
+                type: string
+            Content-Length:
+              schema:
+                type: integer
+                format: int64
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        default:
+          $ref: '#/components/responses/ApiError'
+  /api/template/process/webhook/{templateId}:
+    post:
+      operationId: generateDocumentWebhook
+      summary: Start PDF generation with webhook delivery
+      tags: [Documents]
+      parameters:
+        - $ref: '#/components/parameters/ProcessingTemplateId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [data, url]
+              properties:
+                data:
+                  type: string
+                  description: JSON serialized as a multipart text field.
+                url:
+                  type: string
+                  format: uri
+      responses:
+        '200':
+          description: Accepted webhook job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookJob'
+              examples:
+                default:
+                  externalValue: ./fixtures/documents/webhook-job.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        default:
+          $ref: '#/components/responses/ApiError'
+components:
+  securitySchemes:
+    PritsetToken:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Pritset access token, sent without a Bearer prefix.
+    PritsetSecret:
+      type: apiKey
+      in: header
+      name: X-Secret
+  parameters:
+    TemplateId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    ProcessingTemplateId:
+      name: templateId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    Search:
+      name: q
+      in: query
+      schema:
+        type: string
+    Page:
+      name: p
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: s
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 100
+    SortBy:
+      name: sorts[0].sortBy
+      in: query
+      schema:
+        type: string
+    SortDirection:
+      name: sorts[0].sortDirection
+      in: query
+      schema:
+        type: integer
+        enum: [0, 1]
+  schemas:
+    Template:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        tags:
+          type: string
+          nullable: true
+        templateObject:
+          type: string
+          nullable: true
+    TemplatePage:
+      type: object
+      required: [data, total]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Template'
+        total:
+          type: integer
+          minimum: 0
+    TemplateFileInfo:
+      type: object
+      required: [contentType, lastModified, objectName, size]
+      properties:
+        contentType:
+          type: string
+        lastModified:
+          type: string
+          format: date-time
+        objectName:
+          type: string
+        size:
+          type: integer
+          format: int64
+          minimum: 0
+    TemplateDetails:
+      type: object
+      required: [template, fileInfo]
+      properties:
+        template:
+          $ref: '#/components/schemas/Template'
+        fileInfo:
+          $ref: '#/components/schemas/TemplateFileInfo'
+    CreateTemplateRequest:
+      type: object
+      required: [name, template]
+      properties:
+        name:
+          type: string
+        tags:
+          type: string
+        template:
+          type: string
+          format: binary
+    UpdateTemplateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        tags:
+          type: string
+        template:
+          type: string
+          format: binary
+    DocumentDataRequest:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: string
+          description: JSON serialized as a multipart text field.
+    WebhookJob:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+    FieldErrors:
+      type: object
+      additionalProperties:
+        type: string
+    ValidationProblem:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        traceId:
+          type: string
+  responses:
+    BadRequest:
+      description: Request validation failed.
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/FieldErrors'
+              - $ref: '#/components/schemas/ValidationProblem'
+        text/plain:
+          schema:
+            type: string
+    NotFound:
+      description: The requested template was not found.
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/FieldErrors'
+              - $ref: '#/components/schemas/ValidationProblem'
+        text/plain:
+          schema:
+            type: string
+    ApiError:
+      description: API error. Inspect the status code before parsing the body.
+      headers:
+        Retry-After:
+          schema:
+            type: string
+        X-Trace:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/FieldErrors'
+              - $ref: '#/components/schemas/ValidationProblem'
+        text/plain:
+          schema:
+            type: string

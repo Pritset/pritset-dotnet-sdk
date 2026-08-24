@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  nuget:
+    runs-on: ubuntu-latest
+    environment: nuget
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: Resolve package version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" != "tag" || "$GITHUB_REF_NAME" != v* ]]; then
+            echo "Release publishing requires a v* tag."
+            exit 1
+          fi
+          echo "PACKAGE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+      - run: pwsh ./scripts/verify-contract.ps1
+      - run: dotnet restore Pritset.sln --locked-mode
+      - run: dotnet build Pritset.sln -c Release --no-restore
+      - run: dotnet test tests/Pritset.Tests/Pritset.Tests.csproj -c Release --no-build --no-restore
+      - run: dotnet pack src/Pritset/Pritset.csproj -c Release --no-build --no-restore -p:PackageVersion=${{ env.PACKAGE_VERSION }} -o artifacts
+      - name: Publish to NuGet
+        run: dotnet nuget push 'artifacts/*.nupkg' --api-key '${{ secrets.NUGET_API_KEY }}' --source https://api.nuget.org/v3/index.json --skip-duplicate

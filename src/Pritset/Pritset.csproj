@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <AssemblyName>Pritset</AssemblyName>
+    <RootNamespace>Pritset</RootNamespace>
+    <PackageId>Pritset</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Pritset</Authors>
+    <Company>Pritset</Company>
+    <Description>Official .NET SDK for the Pritset Document API.</Description>
+    <PackageTags>pritset;pdf;documents;templates;sdk</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/pritset/pritset-dotnet-sdk</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/pritset/pritset-dotnet-sdk</PackageProjectUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- The string overload is required by the netstandard2.0 target; the char overload is unavailable there. -->
+    <NoWarn>$(NoWarn);CS1591;CA1510;CA1847</NoWarn>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

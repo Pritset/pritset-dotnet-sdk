@@ -1,0 +1,6 @@
+{
+  "contractVersion": "1.0.0",
+  "sourceRepository": "https://github.com/pritset/pritset-sdk-contract",
+  "sourceCommit": "825dba0910995a68cf334eed20c4ff914c1cc951",
+  "openapiSha256": "00a17e801001086f89d53b192234f7b4be9e499fb380a98505ece051bf576e2d"
+}

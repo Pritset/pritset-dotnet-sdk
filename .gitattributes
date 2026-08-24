@@ -1,0 +1,9 @@
+* text=auto eol=lf
+*.sln text eol=crlf
+
+/.github export-ignore
+/contract/fixtures export-ignore
+/examples export-ignore
+/scripts export-ignore
+/tests export-ignore
+/CONTRIBUTING.md export-ignore

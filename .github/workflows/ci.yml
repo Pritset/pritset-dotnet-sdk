@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: .NET ${{ matrix.dotnet }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dotnet: [8.0.x, 10.0.x]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            ${{ matrix.dotnet }}
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+      - name: Verify vendored contract
+        shell: pwsh
+        run: ./scripts/verify-contract.ps1
+      - run: dotnet restore Pritset.sln --locked-mode
+      - run: dotnet format Pritset.sln --verify-no-changes --no-restore
+      - run: dotnet build Pritset.sln -c Release --no-restore
+      - run: dotnet test tests/Pritset.Tests/Pritset.Tests.csproj -c Release --no-build --no-restore
+      - run: dotnet pack src/Pritset/Pritset.csproj -c Release --no-build --no-restore -o artifacts
+
+  compatibility:
+    name: Best-effort .NET ${{ matrix.runtime }} consumer
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: [5.0.x, 6.0.x, 7.0.x]
+        include:
+          - runtime: 5.0.x
+            framework: net5.0
+          - runtime: 6.0.x
+            framework: net6.0
+          - runtime: 7.0.x
+            framework: net7.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            ${{ matrix.runtime }}
+      - run: dotnet restore tests/Pritset.Compatibility/Pritset.Compatibility.csproj --locked-mode
+      - run: dotnet build tests/Pritset.Compatibility/Pritset.Compatibility.csproj -c Release --no-restore
+      - run: dotnet tests/Pritset.Compatibility/bin/Release/${{ matrix.framework }}/Pritset.Compatibility.dll
+
+  package-consumer:
+    name: Clean NuGet consumer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet restore src/Pritset/Pritset.csproj --locked-mode
+      - run: dotnet pack src/Pritset/Pritset.csproj -c Release --no-restore -o artifacts
+      - run: dotnet new console --framework net8.0 --output .package-consumer
+      - run: dotnet add .package-consumer package Pritset --version 0.1.0 --no-restore
+      - run: dotnet restore .package-consumer --source "$GITHUB_WORKSPACE/artifacts" --source "https://api.nuget.org/v3/index.json"
+      - name: Compile against packaged API
+        shell: bash
+        run: |
+          printf 'using Pritset;\nConsole.WriteLine(PritsetClient.Version);\n' > .package-consumer/Program.cs
+          dotnet run --project .package-consumer --no-restore
