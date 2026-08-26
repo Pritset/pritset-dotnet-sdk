@@ -2,7 +2,7 @@
 
 Official .NET client for managing Pritset DOCX templates and generating PDFs.
 
-> **Pre-release:** version `0.1.0` targets Pritset SDK contract `1.0.0`. The package has not yet been published to NuGet.
+Version `0.1.0` targets Pritset SDK contract `1.0.0`.
 
 ## Requirements and compatibility
 
