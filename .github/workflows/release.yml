@@ -9,6 +9,9 @@ permissions:
 
 jobs:
   nuget:
+    permissions:
+      id-token: write
+      
     runs-on: ubuntu-latest
     environment: nuget
     steps:
