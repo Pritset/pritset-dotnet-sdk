@@ -18,7 +18,7 @@ namespace Pritset;
 public sealed class PritsetClient : IDisposable
 {
     /// <summary>The semantic version of this SDK.</summary>
-    public const string Version = "0.1.0";
+    public const string Version = "0.1.5";
 
     private readonly string _accessToken;
     private readonly string _secret;

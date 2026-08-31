@@ -18,7 +18,7 @@ public sealed class PritsetClientTests
             Assert.Equal("/v1/api/template", request.RequestUri!.AbsolutePath);
             Assert.Equal("access-token", Header(request, "Authorization"));
             Assert.Equal("client-secret", Header(request, "X-Secret"));
-            Assert.Equal("pritset-dotnet/0.1.0", request.Headers.UserAgent.ToString());
+            Assert.Equal("pritset-dotnet/0.1.5", request.Headers.UserAgent.ToString());
             Assert.Equal("application/json", request.Headers.Accept.Single().MediaType);
             string query = request.RequestUri.Query;
             Assert.Contains("q=invoice", query);

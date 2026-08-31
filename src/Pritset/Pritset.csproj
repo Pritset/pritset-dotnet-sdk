@@ -4,7 +4,7 @@
     <AssemblyName>Pritset</AssemblyName>
     <RootNamespace>Pritset</RootNamespace>
     <PackageId>Pritset</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.5</Version>
     <Authors>Pritset</Authors>
     <Company>Pritset</Company>
     <Description>Official .NET SDK for the Pritset Document API.</Description>

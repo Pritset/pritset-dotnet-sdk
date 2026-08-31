@@ -1,0 +1,48 @@
+name: Production test-user lifecycle
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-PRODUCTION-TEST to confirm the production test-user lifecycle
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  production-lifecycle:
+    if: ${{ inputs.confirmation == 'RUN-PRODUCTION-TEST' }}
+    runs-on: ubuntu-latest
+    environment: production-test
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 8.0.x
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+      - name: Verify and build without credentials
+        shell: pwsh
+        run: |
+          ./scripts/verify-contract.ps1
+          dotnet restore Pritset.sln --locked-mode
+          dotnet format Pritset.sln --verify-no-changes --no-restore
+          dotnet build Pritset.sln -c Release --no-restore
+          dotnet test tests/Pritset.Tests/Pritset.Tests.csproj -c Release --no-build --no-restore
+          dotnet publish tools/Pritset.ProductionLifecycle/Pritset.ProductionLifecycle.csproj -c Release --no-build --no-restore -o "$env:RUNNER_TEMP/pritset-production-lifecycle"
+      - name: Run production test-user lifecycle
+        shell: pwsh
+        env:
+          PRITSET_BASE_URL: https://api.pritset.com
+          PRITSET_ACCESS_TOKEN: ${{ secrets.PRITSET_ACCESS_TOKEN }}
+          PRITSET_SECRET: ${{ secrets.PRITSET_SECRET }}
+          PRITSET_WEBHOOK_URL: ${{ secrets.PRITSET_WEBHOOK_URL }}
+          PRITSET_ALLOW_PRODUCTION: 'true'
+          PRITSET_PRODUCTION_TEST_USER_CONFIRMED: ${{ vars.PRITSET_PRODUCTION_TEST_USER_CONFIRMED }}
+          PRITSET_TEST_RUN_PREFIX: pritset-sdk-production-test
+          PRITSET_WEBHOOK_SETTLE_SECONDS: ${{ vars.PRITSET_WEBHOOK_SETTLE_SECONDS || '10' }}
+          PRITSET_TEMPLATE_PATH: tests/fixtures/staging-template.docx
+        run: dotnet "$env:RUNNER_TEMP/pritset-production-lifecycle/Pritset.ProductionLifecycle.dll"

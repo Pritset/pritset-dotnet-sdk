@@ -16,11 +16,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Pritset\Pritset.csproj" />
+    <ProjectReference Include="..\..\tools\Pritset.ProductionLifecycle\Pritset.ProductionLifecycle.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="..\..\contract\fixtures\**\*">
       <Link>contract\fixtures\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\fixtures\staging-template.docx">
+      <Link>tests\fixtures\staging-template.docx</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

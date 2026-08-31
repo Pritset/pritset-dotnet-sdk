@@ -97,6 +97,12 @@
         "dependencies": {
           "Newtonsoft.Json": "[13.0.4, )"
         }
+      },
+      "pritset.productionlifecycle": {
+        "type": "Project",
+        "dependencies": {
+          "Pritset": "[0.1.5, )"
+        }
       }
     }
   }

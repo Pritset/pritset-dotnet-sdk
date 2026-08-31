@@ -71,7 +71,7 @@ jobs:
       - run: dotnet restore src/Pritset/Pritset.csproj --locked-mode
       - run: dotnet pack src/Pritset/Pritset.csproj -c Release --no-restore -o artifacts
       - run: dotnet new console --framework net8.0 --output .package-consumer
-      - run: dotnet add .package-consumer package Pritset --version 0.1.0 --no-restore
+      - run: dotnet add .package-consumer package Pritset --version 0.1.5 --no-restore
       - run: dotnet restore .package-consumer --source "$GITHUB_WORKSPACE/artifacts" --source "https://api.nuget.org/v3/index.json"
       - name: Compile against packaged API
         shell: bash
