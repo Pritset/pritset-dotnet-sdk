@@ -1,19 +1,16 @@
 name: Production test-user lifecycle
 
 on:
-  workflow_dispatch:
-    inputs:
-      confirmation:
-        description: Type RUN-PRODUCTION-TEST to confirm the production test-user lifecycle
-        required: true
-        type: string
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
 
 permissions:
   contents: read
 
 jobs:
   production-lifecycle:
-    if: ${{ inputs.confirmation == 'RUN-PRODUCTION-TEST' }}
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     environment: production-test
     timeout-minutes: 15
